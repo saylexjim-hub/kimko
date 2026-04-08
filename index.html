@@ -135,7 +135,6 @@
 <body>
 <div id="root"></div>
 <script type="text/babel">
-const API_KEY = "TU_API_KEY_AQUI"; // Reemplaza con tu clave de Anthropic — nunca subas la clave real a GitHub
 
 const { useState, useEffect } = React;
 const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
@@ -296,9 +295,9 @@ ${prevKi}
 Responde ÚNICAMENTE con JSON válido sin markdown:
 {"coach":"Una oración motivadora con referencia al doblaje latino.","entrada":"Qué hacer los primeros 5-10 min. Concreto.","principal":"Trabajo central con RPE específico basado en RPE típico y ki actual.","cierre":"Cómo cerrar la sesión. 5-10 min. Concreto."}`;
 
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/chat", {
         method:"POST",
-        headers:{ "Content-Type":"application/json", "x-api-key": API_KEY, "anthropic-version":"2023-06-01" },
+        headers:{ "Content-Type":"application/json" },
         body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:600, messages:[{role:"user",content:prompt}] })
       });
       const data = await res.json();

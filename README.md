@@ -4,10 +4,22 @@ Herramienta gratuita de gestión de carga de entrenamiento basada en el método 
 gamificada con el sistema de niveles de Dragon Ball Z (doblaje latino).
 Desarrollada por Saybor.
 
+**Producción:** https://kimko-gold.vercel.app
+
 ## Uso
 
-Abre index.html en cualquier navegador o visita la URL de GitHub Pages.
+Visita la URL de producción. No requiere instalación ni cuenta.
 
 ## Stack
 
-HTML + React (CDN) + Claude API
+- Frontend: HTML + React (CDN) — `index.html`
+- Backend: Vercel Serverless Function — `api/chat.js`
+- IA: Claude API (Anthropic) via proxy seguro
+
+## Deploy
+
+```bash
+vercel --prod
+```
+
+La API key de Anthropic vive en las variables de entorno de Vercel — nunca en el código.
