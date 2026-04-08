@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>KIMKŌ · Medidor de Ki</title>
+  <meta name="description" content="Kimkō — Entrena según tu energía real. Gestión de carga basada en ciencia deportiva y Dragon Ball Z."/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{background:#000;min-height:100vh;}
+    .k{min-height:100vh;background:#000;display:flex;flex-direction:column;align-items:center;padding:28px 16px 64px;font-family:'Inter',sans-serif;color:#fff;position:relative;}
+    .k::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 70% 35% at 50% 0%,rgba(255,23,68,0.1) 0%,transparent 60%),radial-gradient(ellipse 50% 25% at 100% 100%,rgba(0,229,255,0.05) 0%,transparent 60%);}
+    .k-splash{min-height:100vh;background:#000;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;position:relative;overflow:hidden;}
+    .k-splash::before{content:'';position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse 60% 60% at 50% 50%,rgba(255,23,68,0.07) 0%,transparent 70%);}
+    .k-splash-logo{font-family:'Orbitron',sans-serif;font-size:clamp(52px,12vw,88px);font-weight:900;letter-spacing:.12em;color:#ff1744;text-shadow:0 0 20px rgba(255,23,68,0.9),0 0 40px rgba(255,23,68,0.6),0 0 80px rgba(255,23,68,0.3);animation:k-flicker 4s ease-in-out infinite;user-select:none;}
+    @keyframes k-flicker{0%,100%{opacity:1;}92%{opacity:1;}93%{opacity:.85;}94%{opacity:1;}96%{opacity:.9;}97%{opacity:1;}}
+    .k-splash-sub{font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:.4em;color:#2a2a2a;text-transform:uppercase;margin-top:12px;}
+    .k-splash-hint{font-size:13px;color:#1a1a1a;letter-spacing:.15em;margin-top:48px;text-transform:uppercase;animation:k-blink 2s ease-in-out infinite;}
+    @keyframes k-blink{0%,100%{opacity:.3;}50%{opacity:.8;}}
+    .k-logo{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:900;letter-spacing:.15em;color:#ff1744;margin-bottom:4px;text-shadow:0 0 16px rgba(255,23,68,0.6);}
+    .k-logo-sub{font-size:10px;letter-spacing:.35em;color:#222;text-transform:uppercase;margin-bottom:28px;}
+    .k-card{width:100%;max-width:480px;background:#080808;border:1px solid #1a1a1a;border-radius:16px;padding:28px 24px;position:relative;animation:k-in .25s ease forwards;}
+    .k-card::before{content:'';position:absolute;inset:0;border-radius:16px;background:linear-gradient(135deg,rgba(255,23,68,0.02) 0%,transparent 50%);pointer-events:none;}
+    @keyframes k-in{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
+    .k-title{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;color:#fff;margin-bottom:10px;line-height:1.3;}
+    .k-sub{font-size:15px;color:#444;margin-bottom:24px;line-height:1.7;}
+    .k-sub strong{color:#888;font-weight:500;}
+    .k-label{display:block;font-size:10px;font-weight:700;letter-spacing:.2em;color:#ff1744;text-transform:uppercase;margin-bottom:12px;margin-top:24px;}
+    .k-label:first-child{margin-top:0;}
+    .k-badge{display:inline-flex;align-items:center;gap:6px;border:1px solid #ff1744;border-radius:4px;padding:4px 12px;font-size:11px;color:#ff1744;letter-spacing:.1em;font-weight:700;margin-bottom:20px;text-transform:uppercase;box-shadow:0 0 10px rgba(255,23,68,0.15);}
+    .k-glosario{background:#050505;border:1px solid #111;border-radius:12px;margin-bottom:26px;overflow:hidden;}
+    .k-glos-item{padding:18px 20px;border-bottom:1px solid #0f0f0f;}
+    .k-glos-item:last-child{border-bottom:none;}
+    .k-glos-term{font-family:'Orbitron',sans-serif;font-size:12px;font-weight:700;letter-spacing:.1em;margin-bottom:8px;display:flex;align-items:center;gap:10px;}
+    .k-glos-def{font-size:14px;color:#888;line-height:1.7;}
+    .k-glos-def strong{color:#ccc;font-weight:600;}
+    .k-glos-example{margin-top:8px;padding:10px 12px;background:#0a0a0a;border-left:2px solid;border-radius:0 6px 6px 0;font-size:13px;color:#666;line-height:1.6;font-style:italic;}
+    .k-points{margin-bottom:28px;}
+    .k-point{display:flex;gap:14px;padding:16px 0;border-bottom:1px solid #0f0f0f;}
+    .k-point:last-child{border-bottom:none;}
+    .k-point-icon{font-size:22px;flex-shrink:0;}
+    .k-point-title{font-size:15px;font-weight:600;color:#ddd;margin-bottom:4px;}
+    .k-point-desc{font-size:14px;color:#666;line-height:1.6;}
+    .k-act-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px;}
+    .k-act-btn{background:#0f0f0f;border:1px solid #1a1a1a;border-radius:10px;padding:14px 12px;cursor:pointer;color:#444;font-size:14px;font-family:'Inter',sans-serif;font-weight:500;display:flex;align-items:center;gap:10px;transition:all .15s;text-align:left;}
+    .k-act-btn:hover{border-color:#333;color:#888;}
+    .k-act-btn.on{border-color:#ff1744;background:rgba(255,23,68,0.06);color:#fff;}
+    .k-days-block{background:#0f0f0f;border:1px solid #1a1a1a;border-radius:12px;padding:16px;margin-bottom:10px;}
+    .k-days-name{font-size:15px;font-weight:500;color:#888;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+    .k-days-row{display:flex;gap:6px;flex-wrap:wrap;}
+    .k-day{width:40px;height:40px;border-radius:8px;border:1px solid #1a1a1a;background:#080808;font-size:12px;font-weight:600;color:#2a2a2a;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s;font-family:'Inter',sans-serif;}
+    .k-day:hover{border-color:#333;color:#555;}
+    .k-day.on{border-color:#ff1744;background:rgba(255,23,68,0.08);color:#ff1744;}
+    .k-day.today{box-shadow:0 0 0 1px rgba(255,23,68,0.35);}
+    .k-cfg-block{padding:16px 0;border-bottom:1px solid #0f0f0f;}
+    .k-cfg-block:last-child{border-bottom:none;}
+    .k-cfg-name{font-size:15px;font-weight:500;color:#888;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+    .k-slider-row{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+    .k-slider-lbl{font-size:13px;color:#333;width:130px;flex-shrink:0;}
+    .k-slider{flex:1;accent-color:#ff1744;cursor:pointer;}
+    .k-slider-val{font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:#ff1744;width:50px;text-align:right;}
+    .k-choices{display:grid;gap:8px;margin-bottom:8px;}
+    .k-c2{grid-template-columns:1fr 1fr;}.k-c3{grid-template-columns:1fr 1fr 1fr;}
+    .k-choice{padding:16px 12px;background:#0f0f0f;border:1px solid #1a1a1a;border-radius:10px;cursor:pointer;color:#333;font-family:'Inter',sans-serif;font-size:14px;transition:all .15s;display:flex;flex-direction:column;align-items:flex-start;gap:5px;}
+    .k-choice:hover{border-color:#2a2a2a;color:#666;}
+    .k-choice.on{border-color:#00e5ff;background:rgba(0,229,255,0.04);color:#fff;}
+    .k-choice-icon{font-size:22px;}.k-choice-lbl{font-size:14px;font-weight:600;}.k-choice-sub{font-size:12px;color:#2a2a2a;}
+    .k-choice.on .k-choice-sub{color:#444;}
+    .k-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:6px;}
+    .k-pill{padding:10px 16px;border-radius:6px;border:1px solid #1a1a1a;background:#0f0f0f;font-size:15px;font-weight:500;color:#333;cursor:pointer;transition:all .15s;display:flex;align-items:center;gap:8px;font-family:'Inter',sans-serif;}
+    .k-pill:hover{border-color:#2a2a2a;color:#666;}
+    .k-pill.on{border-color:#00e5ff;background:rgba(0,229,255,0.05);color:#fff;}
+    .k-btn{width:100%;padding:16px;border-radius:8px;font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .15s;border:none;margin-top:8px;}
+    .k-btn-neon{background:#ff1744;color:#fff;box-shadow:0 0 20px rgba(255,23,68,0.35);}
+    .k-btn-neon:hover:not(:disabled){background:#ff4569;box-shadow:0 0 30px rgba(255,23,68,0.55);}
+    .k-btn-neon:disabled{opacity:.2;cursor:not-allowed;box-shadow:none;}
+    .k-btn-ghost{background:transparent;border:1px solid #151515;color:#2a2a2a;font-size:11px;}
+    .k-btn-ghost:hover{border-color:#2a2a2a;color:#444;}
+    .k-btn-row{display:flex;gap:10px;margin-top:22px;}
+    .k-btn-row .k-btn{flex:1;margin-top:0;}
+    .k-greeting{font-size:14px;color:#2a2a2a;margin-bottom:6px;font-style:italic;}
+    .k-date-tag{display:inline-flex;align-items:center;gap:6px;border:1px solid #111;border-radius:6px;padding:6px 12px;font-size:13px;color:#2a2a2a;margin-bottom:22px;font-weight:500;}
+    .k-act-row{display:flex;align-items:center;gap:14px;padding:14px 0;border-bottom:1px solid #0f0f0f;cursor:pointer;transition:opacity .15s;}
+    .k-act-row:last-child{border-bottom:none;}
+    .k-act-row.off{opacity:.2;}
+    .k-check{width:24px;height:24px;border-radius:50%;border:2px solid #1a1a1a;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#000;transition:all .15s;font-weight:700;}
+    .k-check.on{border-color:#ff1744;background:#ff1744;}
+    .k-act-name{font-size:15px;font-weight:500;color:#888;flex:1;}
+    .k-act-meta{font-size:13px;color:#2a2a2a;}
+    .k-empty{padding:20px;border-radius:10px;background:#080808;border:1px solid #111;font-size:14px;color:#2a2a2a;text-align:center;line-height:1.7;margin-bottom:4px;}
+    .k-result-top{text-align:center;padding:8px 0 28px;}
+    .k-ring{width:180px;height:180px;border-radius:50%;border:2px solid var(--rc);margin:0 auto 22px;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative;animation:k-glow 2.5s ease-in-out infinite;}
+    .k-ring::after{content:'';position:absolute;inset:-24px;border-radius:50%;background:radial-gradient(circle,var(--rg) 0%,transparent 65%);z-index:0;pointer-events:none;}
+    .k-ring>*{position:relative;z-index:1;}
+    @keyframes k-glow{0%,100%{box-shadow:var(--rs);}50%{box-shadow:var(--rb);}}
+    .k-ring-lbl{font-size:10px;font-weight:700;letter-spacing:.3em;color:#2a2a2a;text-transform:uppercase;margin-bottom:4px;}
+    .k-ring-num{font-family:'Orbitron',sans-serif;font-size:38px;font-weight:900;line-height:1;color:var(--rc);}
+    .k-ring-sub{font-size:12px;color:#2a2a2a;margin-top:4px;letter-spacing:.1em;}
+    .k-ki-name{font-family:'Orbitron',sans-serif;font-size:20px;font-weight:700;letter-spacing:.05em;margin-bottom:8px;color:var(--rc);text-shadow:0 0 20px var(--rg);}
+    .k-ki-desc{font-size:15px;color:#444;line-height:1.65;max-width:320px;margin:0 auto 22px;}
+    .k-bar{display:flex;gap:6px;justify-content:center;margin-bottom:28px;}
+    .k-pip{height:4px;width:40px;border-radius:2px;transition:all .6s;}
+    .k-rec{background:#050505;border:1px solid #111;border-radius:12px;padding:22px;margin-bottom:12px;position:relative;overflow:hidden;}
+    .k-rec::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,#ff1744,transparent);}
+    .k-rec-lbl{font-size:10px;font-weight:700;letter-spacing:.25em;color:#ff1744;text-transform:uppercase;margin-bottom:14px;}
+    .k-rec-text{font-size:15px;line-height:1.8;color:#888;}
+    .k-workout{background:#050505;border:1px solid #111;border-radius:12px;overflow:hidden;margin-bottom:12px;}
+    .k-workout-header{padding:14px 20px;border-bottom:1px solid #0f0f0f;}
+    .k-workout-title{font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:.2em;color:#00e5ff;text-transform:uppercase;}
+    .k-workout-phases{padding:4px 0;}
+    .k-phase{display:flex;align-items:flex-start;gap:14px;padding:14px 20px;border-bottom:1px solid #080808;}
+    .k-phase:last-child{border-bottom:none;}
+    .k-phase-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-top:5px;}
+    .k-phase-name{font-size:11px;font-weight:700;letter-spacing:.12em;color:#333;text-transform:uppercase;margin-bottom:5px;}
+    .k-phase-content{font-size:14px;color:#666;line-height:1.6;}
+    .k-hist{background:#050505;border:1px solid #0f0f0f;border-radius:12px;padding:20px 22px;margin-bottom:12px;}
+    .k-hist-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid #080808;}
+    .k-hist-row:last-child{border-bottom:none;}
+    .k-hist-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .k-hist-name{font-size:13px;font-weight:600;color:#444;flex:1;}
+    .k-hist-date{font-size:12px;color:#1a1a1a;}
+    .k-hist-val{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;}
+    .k-loader{display:flex;gap:7px;align-items:center;justify-content:center;padding:18px 0;}
+    .k-dot{width:8px;height:8px;border-radius:50%;background:#ff1744;animation:k-pulse 1.3s ease-in-out infinite;}
+    .k-dot:nth-child(2){animation-delay:.2s;}.k-dot:nth-child(3){animation-delay:.4s;}
+    @keyframes k-pulse{0%,100%{opacity:.15;transform:scale(.7);}50%{opacity:1;transform:scale(1.15);}}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const API_KEY = "TU_API_KEY_AQUI"; // Reemplaza con tu clave de Anthropic — nunca subas la clave real a GitHub
+
+const { useState, useEffect } = React;
+const DAYS = ["Dom","Lun","Mar","Mié","Jue","Vie","Sáb"];
+const TODAY_IDX = new Date().getDay();
+
+const ACTIVITIES = [
+  { id:"gym",        name:"Gym / Pesas",      icon:"🏋️", defaultMin:60,  defaultRpe:6 },
+  { id:"futbol",     name:"Fútbol",            icon:"⚽", defaultMin:90,  defaultRpe:7 },
+  { id:"basquetbol", name:"Básquetbol",        icon:"🏀", defaultMin:90,  defaultRpe:7 },
+  { id:"boxeo",      name:"Boxeo / Box",       icon:"🥊", defaultMin:75,  defaultRpe:8 },
+  { id:"correr",     name:"Correr",            icon:"🏃", defaultMin:45,  defaultRpe:6 },
+  { id:"ciclismo",   name:"Ciclismo",          icon:"🚴", defaultMin:60,  defaultRpe:6 },
+  { id:"natacion",   name:"Natación",          icon:"🏊", defaultMin:60,  defaultRpe:6 },
+  { id:"cuerda",     name:"Cuerda de saltar",  icon:"🪢", defaultMin:30,  defaultRpe:7 },
+  { id:"caminata",   name:"Caminata activa",   icon:"🚶", defaultMin:45,  defaultRpe:3 },
+  { id:"otro",       name:"Otro deporte",      icon:"🎯", defaultMin:60,  defaultRpe:6 },
+];
+
+const KI_LEVELS = [
+  { min:0,    max:0.6,  name:"Humano Normal", color:"#888",    glow:"rgba(136,136,136,0.4)", desc:"Ki muy bajo. Carga antes de explotar." },
+  { min:0.6,  max:0.8,  name:"Guerrero Z",    color:"#00e5ff", glow:"rgba(0,229,255,0.4)",   desc:"Debajo de tu base. Entrena con moderación." },
+  { min:0.8,  max:1.3,  name:"Kaioken",       color:"#ff1744", glow:"rgba(255,23,68,0.5)",   desc:"Zona óptima. Tu ki fluye. ¡Libera tu poder!" },
+  { min:1.3,  max:1.5,  name:"Super Saiyan",  color:"#ffe500", glow:"rgba(255,229,0,0.5)",   desc:"Al límite. Técnica sobre fuerza hoy." },
+  { min:1.5,  max:9999, name:"Límite Ultra",  color:"#d500f9", glow:"rgba(213,0,249,0.5)",   desc:"Zona crítica. Recupera tu ki antes del siguiente combate." },
+];
+
+const GREETINGS = [
+  "¿Cómo va ese ki hoy, guerrero?",
+  "Piccolo esperaría que ya estuvieras calentando.",
+  "El Genkidama se carga con energía colectiva. ¿Tienes la tuya?",
+  "Vegeta no descansa. ¿Y tú?",
+  "La Sala del Tiempo no tiene días libres.",
+  "Vamos a ver de qué estás hecho hoy.",
+];
+
+const JORNADAS = [
+  { id:"oficina", label:"Oficina",        icon:"🏢" },
+  { id:"remoto",  label:"Remoto",         icon:"💻" },
+  { id:"fisico",  label:"Trabajo físico", icon:"⚙️" },
+  { id:"mixto",   label:"Mixto",          icon:"🔄" },
+];
+
+const HORARIOS = [
+  { id:"manana", label:"Mañana",  icon:"🌅", sub:"Antes de 12pm" },
+  { id:"tarde",  label:"Tarde",   icon:"☀️",  sub:"12pm – 6pm" },
+  { id:"noche",  label:"Noche",   icon:"🌙", sub:"Después de 6pm" },
+];
+
+const CARGA_LABORAL = [
+  { id:"ligera",  label:"Ligera",  icon:"😌" },
+  { id:"normal",  label:"Normal",  icon:"😐" },
+  { id:"intensa", label:"Intensa", icon:"🔥" },
+];
+
+const FEELINGS = [
+  { id:"pesado",      label:"Pesado",       icon:"😓" },
+  { id:"normal",      label:"Normal",       icon:"😐" },
+  { id:"con_energia", label:"Con energía",  icon:"⚡" },
+];
+
+const AVAILABLE = [
+  { id:"gym",    label:"Gym",        icon:"🏋️" },
+  { id:"parque", label:"Parque",     icon:"🌳" },
+  { id:"saco",   label:"Saco / Box", icon:"🥊" },
+  { id:"casa",   label:"En casa",    icon:"🏠" },
+];
+
+const getKiLevel = acwr => KI_LEVELS.find(l => acwr >= l.min && acwr < l.max) || KI_LEVELS[4];
+const calcLoad   = acts => acts.reduce((s,a) => s + a.minutes * a.rpe, 0);
+const randomG    = ()   => GREETINGS[Math.floor(Math.random() * GREETINGS.length)];
+const todayActs  = acts => acts.filter(a => (a.days||[]).includes(TODAY_IDX));
+const fmtDate    = ()   => new Date().toLocaleDateString("es-MX",{weekday:"long",day:"numeric",month:"long"});
+const lsGet = key => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
+const lsSet = (key,val) => { try { localStorage.setItem(key, JSON.stringify(val)); } catch {} };
+const lsDel = key => { try { localStorage.removeItem(key); } catch {} };
+
+function Kimko() {
+  const [screen,    setScreen]    = useState("splash");
+  const [onbStep,   setOnbStep]   = useState("benefits");
+  const [baseline,  setBaseline]  = useState(null);
+  const [history,   setHistory]   = useState([]);
+  const [greeting,  setGreeting]  = useState(randomG());
+  const [selIds,  setSelIds]  = useState([]);
+  const [actDays, setActDays] = useState({});
+  const [actCfg,  setActCfg]  = useState({});
+  const [jornada, setJornada] = useState(null);
+  const [horario, setHorario] = useState(null);
+  const [todayList, setTodayList] = useState([]);
+  const [feeling,   setFeeling]   = useState(null);
+  const [cargaLab,  setCargaLab]  = useState(null);
+  const [avail,     setAvail]     = useState([]);
+  const [acwr,       setAcwr]       = useState(null);
+  const [kiLevel,    setKiLevel]    = useState(null);
+  const [recText,    setRecText]    = useState("");
+  const [workout,    setWorkout]    = useState(null);
+  const [loadingRec, setLoadingRec] = useState(false);
+
+  useEffect(() => {
+    const saved = lsGet("kimko_baseline");
+    const savedHist = lsGet("kimko_history") || [];
+    setHistory(savedHist);
+    if (saved) {
+      setBaseline(saved);
+      const td = todayActs(saved.activities);
+      setTodayList(td.map(a=>({...a,didIt:true})));
+    }
+  }, []);
+
+  const toggleSel = id => setSelIds(p => p.includes(id) ? p.filter(x=>x!==id) : [...p,id]);
+  const toggleDay = (id,i) => setActDays(p => { const d=p[id]||[]; return{...p,[id]:d.includes(i)?d.filter(x=>x!==i):[...d,i]}; });
+  const updateCfg = (id,f,v) => setActCfg(p=>({...p,[id]:{...p[id],[f]:v}}));
+
+  function goToDays() {
+    const cfg={},days={};
+    selIds.forEach(id=>{ const a=ACTIVITIES.find(x=>x.id===id); cfg[id]={minutes:a.defaultMin,rpe:a.defaultRpe}; days[id]=[]; });
+    setActCfg(cfg); setActDays(days); setOnbStep("days");
+  }
+
+  function finish() {
+    const activities = selIds.map(id=>{ const a=ACTIVITIES.find(x=>x.id===id); return{id,name:a.name,icon:a.icon,minutes:actCfg[id]?.minutes||a.defaultMin,rpe:actCfg[id]?.rpe||a.defaultRpe,days:actDays[id]||[]}; });
+    const base = { activities, weeklyLoad:calcLoad(activities), jornada, horario };
+    lsSet("kimko_baseline", base);
+    setBaseline(base);
+    const td = todayActs(activities);
+    setTodayList(td.map(a=>({...a,didIt:true})));
+    setGreeting(randomG());
+    setScreen("welcome");
+  }
+
+  const toggleDid   = id => setTodayList(p=>p.map(a=>a.id===id?{...a,didIt:!a.didIt}:a));
+  const toggleAvail = id => setAvail(p=>p.includes(id)?p.filter(x=>x!==id):[...p,id]);
+
+  async function readKi() {
+    const done  = todayList.filter(a=>a.didIt);
+    const ratio = baseline.weeklyLoad>0 ? calcLoad(done)/baseline.weeklyLoad : 0.8;
+    const level = getKiLevel(ratio);
+    setAcwr(ratio); setKiLevel(level);
+    const entry = { date:new Date().toLocaleDateString("es-MX",{day:"numeric",month:"short"}), acwr:ratio, kiName:level.name, kiColor:level.color };
+    const newHist = [entry, ...history].slice(0,8);
+    setHistory(newHist);
+    lsSet("kimko_history", newHist);
+    setScreen("result"); setLoadingRec(true); setWorkout(null); setRecText("");
+    try {
+      const actRpes    = done.map(a=>`${a.name} (RPE típico ${a.rpe})`).join(", ")||"ninguna";
+      const availStr   = avail.map(id=>AVAILABLE.find(o=>o.id===id)?.label).join(", ")||"lo disponible";
+      const feelLbl    = FEELINGS.find(f=>f.id===feeling)?.label||"normal";
+      const cargaLbl   = CARGA_LABORAL.find(c=>c.id===cargaLab)?.label||"normal";
+      const jornadaLbl = JORNADAS.find(j=>j.id===baseline.jornada)?.label||"";
+      const horarioLbl = HORARIOS.find(h=>h.id===baseline.horario)?.label||"";
+      const prevKi     = history.length>0 ? `Consulta anterior: ${history[0].kiName} (ACWR ${history[0].acwr.toFixed(2)}).` : "";
+      const prompt = `Eres Kimkō, coach de entrenamiento con personalidad basada en Dragon Ball Z doblaje latino. Usa términos del doblaje: Genkidama, Kaioken, Saga de Cell, Vegeta, Piccoro, Krilin, Sala del Tiempo, etc. Directo, sin relleno, sin asteriscos. Usa RPE del usuario para intensidad, nunca porcentajes.
+
+Perfil: Trabajo ${jornadaLbl}, entrena en ${horarioLbl}.
+Actividades con RPE típico: ${actRpes}.
+Hoy: Ki ${level.name} (ACWR ${ratio.toFixed(2)}), trabajo ${cargaLbl}, sensación ${feelLbl}, disponible: ${availStr}.
+${prevKi}
+
+Responde ÚNICAMENTE con JSON válido sin markdown:
+{"coach":"Una oración motivadora con referencia al doblaje latino.","entrada":"Qué hacer los primeros 5-10 min. Concreto.","principal":"Trabajo central con RPE específico basado en RPE típico y ki actual.","cierre":"Cómo cerrar la sesión. 5-10 min. Concreto."}`;
+
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method:"POST",
+        headers:{ "Content-Type":"application/json", "x-api-key": API_KEY, "anthropic-version":"2023-06-01" },
+        body: JSON.stringify({ model:"claude-haiku-4-5-20251001", max_tokens:600, messages:[{role:"user",content:prompt}] })
+      });
+      const data = await res.json();
+      const raw = data.content?.[0]?.text || "{}";
+      try {
+        const parsed = JSON.parse(raw.replace(/```json|```/g,"").trim());
+        setRecText(parsed.coach||"");
+        setWorkout({ entrada:parsed.entrada, principal:parsed.principal, cierre:parsed.cierre });
+      } catch { setRecText(raw); setWorkout(null); }
+    } catch(e) { setRecText("Error al conectar. Verifica tu API key e intenta de nuevo."); }
+    setLoadingRec(false);
+  }
+
+  function newCheckin() {
+    setFeeling(null); setCargaLab(null); setAvail([]); setRecText(""); setWorkout(null); setAcwr(null); setKiLevel(null);
+    setGreeting(randomG());
+    const td = todayActs(baseline.activities);
+    setTodayList(td.map(a=>({...a,didIt:true})));
+    setScreen("welcome");
+  }
+
+  function resetAll() {
+    lsDel("kimko_baseline");
+    setBaseline(null); setSelIds([]); setActCfg({}); setActDays({});
+    setJornada(null); setHorario(null);
+    setScreen("onboarding"); setOnbStep("benefits");
+  }
+
+  const rStyle = kiLevel ? { "--rc":kiLevel.color,"--rg":kiLevel.glow,"--rs":`0 0 30px ${kiLevel.glow}`,"--rb":`0 0 60px ${kiLevel.glow}, 0 0 100px ${kiLevel.glow}` } : {};
+
+  if (screen==="splash") return (
+    <div className="k-splash" onClick={()=>{
+      const saved = lsGet("kimko_baseline");
+      if (saved) { setBaseline(saved); const td=todayActs(saved.activities); setTodayList(td.map(a=>({...a,didIt:true}))); setScreen("welcome"); }
+      else { setScreen("onboarding"); setOnbStep("benefits"); }
+    }}>
+      <div className="k-splash-logo">KIMKŌ</div>
+      <div className="k-splash-sub">Medidor de Ki · Saybor</div>
+      <div className="k-splash-hint">Toca para iniciar</div>
+    </div>
+  );
+
+  return (
+    <div className="k">
+      <div className="k-logo">KIMKŌ</div>
+      <div className="k-logo-sub">Medidor de Ki · Saybor</div>
+
+      {screen==="onboarding" && onbStep==="benefits" && (
+        <div className="k-card">
+          <div className="k-badge">⚡ Para qué sirve</div>
+          <div className="k-title">Entrena más inteligente,<br/>no más duro.</div>
+          <div className="k-sub">Kimkō no te dice qué ejercicio hacer. Te dice <strong>con cuánta energía cuentas para hacerlo hoy.</strong></div>
+          <div style={{display:"flex",flexDirection:"column",marginBottom:"32px"}}>
+            {[
+              { icon:"🛡️", color:"#00e5ff", title:"Evitas lesiones", desc:"El sobreentrenamiento es la causa #1 de lesiones en atletas recreacionales. Kimkō te avisa antes de que pase." },
+              { icon:"🎯", color:"#ff1744", title:"Sabes qué hacer hoy", desc:"No más dudas entre entrenar fuerte o suave. El plan del día se ajusta a cómo llegaste, no a un calendario fijo." },
+              { icon:"📈", color:"#ffe500", title:"Ves tu progreso real", desc:"Tu nivel de ki semana a semana muestra si estás mejorando tu base o acumulando fatiga sin darte cuenta." },
+            ].map((b,i)=>(
+              <div key={i} style={{display:"flex",gap:"16px",padding:"18px 0",borderBottom:i<2?"1px solid #0f0f0f":"none"}}>
+                <div style={{width:"44px",height:"44px",borderRadius:"10px",flexShrink:0,background:`${b.color}11`,border:`1px solid ${b.color}33`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:"22px"}}>{b.icon}</div>
+                <div><div style={{fontSize:"15px",fontWeight:"600",color:"#ddd",marginBottom:"5px"}}>{b.title}</div><div style={{fontSize:"14px",color:"#666",lineHeight:"1.65"}}>{b.desc}</div></div>
+              </div>
+            ))}
+          </div>
+          <button className="k-btn k-btn-neon" onClick={()=>setOnbStep("intro")}>Entendido →</button>
+        </div>
+      )}
+
+      {screen==="onboarding" && onbStep==="intro" && (
+        <div className="k-card">
+          <div className="k-badge">⚡ Beta gratuita</div>
+          <div className="k-title">Dos conceptos clave<br/>antes de empezar.</div>
+          <div className="k-sub">Los usarás cada vez que abras Kimkō.</div>
+          <div className="k-glosario">
+            <div className="k-glos-item">
+              <div className="k-glos-term" style={{color:"#ff1744"}}><span>⚡</span>RPE — Esfuerzo Percibido</div>
+              <div className="k-glos-def">Una escala del <strong>1 al 10</strong> que mide qué tan duro te pareció una sesión. No importa el peso — importa cómo lo sintió tu cuerpo.</div>
+              <div className="k-glos-example" style={{borderColor:"#ff1744"}}>RPE 3 = paseo tranquilo · RPE 6 = gym normal · RPE 9 = al límite</div>
+            </div>
+            <div className="k-glos-item">
+              <div className="k-glos-term" style={{color:"#00e5ff"}}><span>📊</span>ACWR — Tu Nivel de Ki</div>
+              <div className="k-glos-def">Compara <strong>lo que hiciste esta semana</strong> contra tu semana típica. Más de lo normal = ki alto. Menos = ki bajo, puedes exigirte más.</div>
+              <div className="k-glos-example" style={{borderColor:"#00e5ff"}}>ACWR 0.8–1.3 = zona óptima · mayor a 1.5 = riesgo de lesión</div>
+            </div>
+          </div>
+          <div className="k-btn-row">
+            <button className="k-btn k-btn-ghost" style={{flex:"0 0 84px"}} onClick={()=>setOnbStep("benefits")}>← Atrás</button>
+            <button className="k-btn k-btn-neon" onClick={()=>setOnbStep("select")}>Configurar mi perfil →</button>
+          </div>
+        </div>
+      )}
+
+      {screen==="onboarding" && onbStep==="select" && (
+        <div className="k-card">
+          <div className="k-title">¿Qué haces normalmente?</div>
+          <div className="k-sub">Selecciona tus actividades. Solo lo configuras una vez.</div>
+          <div className="k-act-grid">
+            {ACTIVITIES.map(a=>(<button key={a.id} className={`k-act-btn ${selIds.includes(a.id)?"on":""}`} onClick={()=>toggleSel(a.id)}><span>{a.icon}</span><span>{a.name}</span></button>))}
+          </div>
+          <div className="k-btn-row">
+            <button className="k-btn k-btn-ghost" style={{flex:"0 0 84px"}} onClick={()=>setOnbStep("intro")}>← Atrás</button>
+            <button className="k-btn k-btn-neon" onClick={goToDays} disabled={selIds.length===0}>Continuar →</button>
+          </div>
+        </div>
+      )}
+
+      {screen==="onboarding" && onbStep==="days" && (
+        <div className="k-card">
+          <div className="k-title">¿Qué días entrenas?</div>
+          <div className="k-sub">Kimkō sabrá qué tocaba hoy. <strong>{DAYS[TODAY_IDX]} está resaltado.</strong></div>
+          {selIds.map(id=>{ const a=ACTIVITIES.find(x=>x.id===id); const days=actDays[id]||[];
+            return(<div key={id} className="k-days-block"><div className="k-days-name">{a.icon} {a.name}</div><div className="k-days-row">{DAYS.map((d,i)=>(<button key={i} className={`k-day ${days.includes(i)?"on":""} ${i===TODAY_IDX?"today":""}`} onClick={()=>toggleDay(id,i)}>{d}</button>))}</div></div>);
+          })}
+          <div className="k-btn-row">
+            <button className="k-btn k-btn-ghost" style={{flex:"0 0 84px"}} onClick={()=>setOnbStep("select")}>← Atrás</button>
+            <button className="k-btn k-btn-neon" onClick={()=>setOnbStep("config")}>Continuar →</button>
+          </div>
+        </div>
+      )}
+
+      {screen==="onboarding" && onbStep==="config" && (
+        <div className="k-card">
+          <div className="k-title">Tu intensidad típica</div>
+          <div className="k-sub">Kimkō usará tu <strong>RPE personal</strong> para recomendaciones que tengan sentido para ti.</div>
+          {selIds.map(id=>{ const a=ACTIVITIES.find(x=>x.id===id); const cfg=actCfg[id]||{minutes:a.defaultMin,rpe:a.defaultRpe};
+            return(<div key={id} className="k-cfg-block">
+              <div className="k-cfg-name">{a.icon} {a.name}</div>
+              <div className="k-slider-row"><div className="k-slider-lbl">Minutos / semana</div><input type="range" className="k-slider" min={15} max={300} step={15} value={cfg.minutes} onChange={e=>updateCfg(id,"minutes",+e.target.value)}/><div className="k-slider-val">{cfg.minutes}m</div></div>
+              <div className="k-slider-row"><div className="k-slider-lbl">RPE típico (1–10)</div><input type="range" className="k-slider" min={1} max={10} step={1} value={cfg.rpe} onChange={e=>updateCfg(id,"rpe",+e.target.value)}/><div className="k-slider-val">RPE {cfg.rpe}</div></div>
+            </div>);
+          })}
+          <div className="k-btn-row">
+            <button className="k-btn k-btn-ghost" style={{flex:"0 0 84px"}} onClick={()=>setOnbStep("days")}>← Atrás</button>
+            <button className="k-btn k-btn-neon" onClick={()=>setOnbStep("work")}>Continuar →</button>
+          </div>
+        </div>
+      )}
+
+      {screen==="onboarding" && onbStep==="work" && (
+        <div className="k-card">
+          <div className="k-title">Tu jornada laboral</div>
+          <div className="k-sub">El trabajo también gasta energía. <strong>Kimkō lo considera.</strong></div>
+          <span className="k-label">Tipo de trabajo</span>
+          <div className="k-choices k-c2" style={{marginBottom:"24px"}}>
+            {JORNADAS.map(j=>(<button key={j.id} className={`k-choice ${jornada===j.id?"on":""}`} onClick={()=>setJornada(j.id)}><span className="k-choice-icon">{j.icon}</span><span className="k-choice-lbl">{j.label}</span></button>))}
+          </div>
+          <span className="k-label">¿Cuándo sueles entrenar?</span>
+          <div className="k-choices k-c3">
+            {HORARIOS.map(h=>(<button key={h.id} className={`k-choice ${horario===h.id?"on":""}`} onClick={()=>setHorario(h.id)}><span className="k-choice-icon">{h.icon}</span><span className="k-choice-lbl">{h.label}</span><span className="k-choice-sub">{h.sub}</span></button>))}
+          </div>
+          <div className="k-btn-row">
+            <button className="k-btn k-btn-ghost" style={{flex:"0 0 84px"}} onClick={()=>setOnbStep("config")}>← Atrás</button>
+            <button className="k-btn k-btn-neon" onClick={finish} disabled={!jornada||!horario}>Activar Kimkō →</button>
+          </div>
+        </div>
+      )}
+
+      {screen==="welcome" && (
+        <div className="k-card">
+          <div className="k-greeting">{greeting}</div>
+          <div className="k-title">¿Cómo va el día?</div>
+          <div className="k-date-tag">📅 {fmtDate()}</div>
+          <span className="k-label">Lo que tocaba hoy</span>
+          {todayList.length===0
+            ? <div className="k-empty">No tienes nada programado hoy.<br/>Descansa o agrega algo si surgió.</div>
+            : <div style={{marginBottom:"22px"}}>{todayList.map(a=>(<div key={a.id} className={`k-act-row ${a.didIt?"":"off"}`} onClick={()=>toggleDid(a.id)}><div className={`k-check ${a.didIt?"on":""}`}>{a.didIt?"✓":""}</div><div className="k-act-name">{a.icon} {a.name}</div><div className="k-act-meta">{a.minutes}min · RPE {a.rpe}</div></div>))}</div>
+          }
+          <span className="k-label">¿Cómo estuvo el trabajo?</span>
+          <div className="k-pills" style={{marginBottom:"20px"}}>
+            {CARGA_LABORAL.map(c=>(<button key={c.id} className={`k-pill ${cargaLab===c.id?"on":""}`} onClick={()=>setCargaLab(c.id)}>{c.icon} {c.label}</button>))}
+          </div>
+          <span className="k-label">¿Cómo te sientes?</span>
+          <div className="k-pills" style={{marginBottom:"20px"}}>
+            {FEELINGS.map(f=>(<button key={f.id} className={`k-pill ${feeling===f.id?"on":""}`} onClick={()=>setFeeling(f.id)}>{f.icon} {f.label}</button>))}
+          </div>
+          <span className="k-label">¿Qué tienes disponible?</span>
+          <div className="k-pills" style={{marginBottom:"8px"}}>
+            {AVAILABLE.map(o=>(<button key={o.id} className={`k-pill ${avail.includes(o.id)?"on":""}`} onClick={()=>toggleAvail(o.id)}>{o.icon} {o.label}</button>))}
+          </div>
+          <button className="k-btn k-btn-neon" style={{marginTop:"24px"}} disabled={!feeling||!cargaLab||avail.length===0} onClick={readKi}>
+            Leer mi ki →
+          </button>
+          <button className="k-btn k-btn-ghost" onClick={resetAll}>Reconfigurar desde cero</button>
+        </div>
+      )}
+
+      {screen==="result" && kiLevel && (
+        <div className="k-card">
+          <div className="k-result-top">
+            <div className="k-ring" style={rStyle}>
+              <div className="k-ring-lbl">Ki actual</div>
+              <div className="k-ring-num">{acwr?.toFixed(2)}</div>
+              <div className="k-ring-sub">ACWR</div>
+            </div>
+            <div className="k-ki-name" style={rStyle}>{kiLevel.name}</div>
+            <div className="k-ki-desc">{kiLevel.desc}</div>
+            <div className="k-bar">
+              {KI_LEVELS.map((l,i)=>(<div key={i} className="k-pip" style={{background:l.name===kiLevel.name?l.color:"#111",boxShadow:l.name===kiLevel.name?`0 0 8px ${l.glow}`:""}}/>))}
+            </div>
+          </div>
+          {loadingRec ? (
+            <div className="k-rec"><div className="k-rec-lbl">Coach Kimkō</div><div className="k-loader"><div className="k-dot"/><div className="k-dot"/><div className="k-dot"/></div></div>
+          ) : (
+            <>
+              {recText && <div className="k-rec"><div className="k-rec-lbl">Coach Kimkō</div><div className="k-rec-text">{recText}</div></div>}
+              {workout && (
+                <div className="k-workout">
+                  <div className="k-workout-header"><div className="k-workout-title">⚡ Plan de hoy</div></div>
+                  <div className="k-workout-phases">
+                    <div className="k-phase"><div className="k-phase-dot" style={{background:"#00e5ff",boxShadow:"0 0 6px rgba(0,229,255,0.5)"}}/><div><div className="k-phase-name">Entrada</div><div className="k-phase-content">{workout.entrada}</div></div></div>
+                    <div className="k-phase"><div className="k-phase-dot" style={{background:kiLevel.color,boxShadow:`0 0 6px ${kiLevel.glow}`}}/><div><div className="k-phase-name">Trabajo principal</div><div className="k-phase-content">{workout.principal}</div></div></div>
+                    <div className="k-phase"><div className="k-phase-dot" style={{background:"#333"}}/><div><div className="k-phase-name">Cierre</div><div className="k-phase-content">{workout.cierre}</div></div></div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+          {history.length>1 && (
+            <div className="k-hist">
+              <div className="k-rec-lbl" style={{marginBottom:"8px"}}>Historial de ki</div>
+              {history.slice(0,5).map((h,i)=>(<div key={i} className="k-hist-row"><div className="k-hist-dot" style={{background:h.kiColor,boxShadow:`0 0 5px ${h.kiColor}`}}/><div className="k-hist-name">{h.kiName}</div><div className="k-hist-date">{h.date}</div><div className="k-hist-val" style={{color:h.kiColor}}>{h.acwr.toFixed(2)}</div></div>))}
+            </div>
+          )}
+          <button className="k-btn k-btn-ghost" onClick={newCheckin}>Nueva consulta</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<Kimko/>);
+</script>
+</body>
+</html>
