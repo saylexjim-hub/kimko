@@ -13,28 +13,26 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Body inválido — se requiere messages' });
     }
 
-    // Extraer el prompt del formato Anthropic que manda el frontend
-    const prompt = body.messages.map(m => m.content).join('\n');
+    const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.GROQ_API_KEY}`,
+      },
+      body: JSON.stringify({
+        model: 'llama-3.3-70b-versatile',
+        max_tokens: body.max_tokens || 600,
+        messages: body.messages,
+      }),
+    });
 
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: { maxOutputTokens: body.max_tokens || 600 },
-        }),
-      }
-    );
+    const groqData = await groqRes.json();
 
-    const geminiData = await geminiRes.json();
-
-    if (!geminiRes.ok) {
-      return res.status(geminiRes.status).json({ error: geminiData.error?.message || 'Error de Gemini' });
+    if (!groqRes.ok) {
+      return res.status(groqRes.status).json({ error: groqData.error?.message || 'Error de Groq' });
     }
 
-    const text = geminiData.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
+    const text = groqData.choices?.[0]?.message?.content || '{}';
 
     // Devolver en formato Anthropic para que el frontend no cambie
     return res.status(200).json({
